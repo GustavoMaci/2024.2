@@ -238,3 +238,66 @@ fazer_requisicao_get()
 ## Links
 - [http.server — HTTP servers](https://docs.python.org/3/library/http.server.html)
 
+## Respostas
+### Execução com:
+
+#### 1 cliente
+- O servidor respondeu normalmente à requisição e o cliente obteve a página com status `200 OK`.
+- Como apenas 1 cliente fez a requisição, o servidor conseguiu tratá-la sem filas ou atrasos perceptíveis.
+
+#### 2 clientes simultâneos
+- O servidor sem thread tratou uma requisição por vez.
+- O primeiro cliente foi atendido imediatamente, enquanto o segundo cliente ficou esperando até o servidor terminar de responder ao primeiro.
+- Pequeno atraso percebido no segundo cliente.
+
+#### 5 clientes simultâneos
+- O servidor sem thread continuou processando uma requisição por vez.
+- Notei uma fila de requisições, com cada cliente esperando sua vez.
+- Os clientes foram atendidos em série, com alguns atrasos a partir do segundo cliente.
+
+#### 10 clientes simultâneos
+- Mesmo comportamento: requisições em série, fila longa.
+- O tempo de resposta aumentou para os últimos clientes.
+- O servidor ficou "ocupado" durante toda a fila, pois não suporta múltiplas conexões simultâneas.
+
+---
+
+## Experimento 1 - Usando Thread no Servidor
+
+### Execução com:
+
+#### 1 cliente
+- O comportamento foi igual ao servidor sem thread, já que só havia uma requisição.
+- O cliente recebeu a resposta rapidamente, sem fila.
+
+#### 2 clientes simultâneos
+- Ambos os clientes foram atendidos ao mesmo tempo, já que cada requisição foi processada em uma thread separada.
+- Nenhum cliente precisou esperar o outro terminar.
+
+#### 5 clientes simultâneos
+- Todos os 5 clientes foram processados simultaneamente.
+- O servidor multithread atendeu todas as requisições quase ao mesmo tempo, sem filas perceptíveis.
+- O tempo de resposta foi muito melhor comparado ao servidor sem thread.
+
+#### 10 clientes simultâneos
+- O servidor conseguiu lidar com as 10 requisições simultaneamente.
+- Pequeno aumento no tempo de resposta , mas foi bem mais rápido que o servidor sem thread.
+- Todos os clientes receberam a resposta praticamente no mesmo instante.
+
+---
+
+## Análise Comparativa
+
+### Diferença no funcionamento entre os dois servidores:
+
+| Critério                       | Servidor sem Thread                    | Servidor com Thread                          |
+|--------------------------------|----------------------------------------|---------------------------------------------|
+| Processamento de clientes      | Sequencial (um por vez)                | Paralelo (várias requisições ao mesmo tempo)|
+| Tempo de resposta (muitos clientes) | Lento, devido à fila de espera        | Rápido, cada requisição tem sua própria thread |
+| Desempenho com alta carga      | Ruim com 5 ou mais clientes simultâneos| Melhor desempenho com muitos clientes       |
+
+### Conclusão:
+- O servidor **sem thread** funciona bem para poucos clientes ou situações de baixa carga, mas cria filas e atrasos quando há múltiplas requisições simultâneas.
+- O servidor **com thread** é mais eficiente para múltiplos clientes, reduzindo significativamente o tempo de resposta.
+
+---
